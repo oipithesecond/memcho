@@ -1,23 +1,18 @@
 import os
 import datetime
+import asyncio
 from flask import request, redirect, session, url_for
 import telegram
 
 from shared import app, bot, db, get_google_flow
-
 from scheduler import check_timed_tasks, check_daily_tasks
 
 @app.route('/')
 def index():
-    """A simple route to confirm the web service is running."""
     return "Bot server is running."
 
 @app.route('/telegram/webhook', methods=['POST'])
 def telegram_webhook():
-    """
-    This is the main webhook endpoint for Telegram.
-    Telegram sends all user messages (Updates) here.
-    """
     if not bot:
         return "Bot not configured", 500
 
@@ -30,11 +25,11 @@ def telegram_webhook():
         keyboard = [[telegram.InlineKeyboardButton("Connect Google Tasks", callback_data='connect')]]
         reply_markup = telegram.InlineKeyboardMarkup(keyboard)
         
-        bot.send_message(
+        asyncio.run(bot.send_message(
             chat_id=chat_id, 
             text="Welcome! Please connect your Google Tasks account.",
             reply_markup=reply_markup
-        )
+        ))
         
     elif update.callback_query and update.callback_query.data == 'connect':
         chat_id = update.callback_query.message.chat.id
@@ -47,20 +42,16 @@ def telegram_webhook():
         )
         session['state'] = state
         
-        bot.send_message(
+        asyncio.run(bot.send_message(
             chat_id=chat_id, 
             text=f"Click this link to authorize:\n\n{authorization_url}\n\n"
                  "After authorizing, you will be redirected back here."
-        )
+        ))
         
     return 'ok', 200
 
 @app.route('/auth/google/callback')
 def auth_google_callback():
-    """
-    This is the REDIRECT_URI that Google sends the user back to
-    after they have successfully authenticated.
-    """
     state = session.get('state')
     chat_id = session.get('chat_id')
     
@@ -78,7 +69,7 @@ def auth_google_callback():
         refresh_token = creds.refresh_token
         
         if not refresh_token:
-            bot.send_message(chat_id=chat_id, text="Error: A refresh token was not provided. Please try connecting again.")
+            asyncio.run(bot.send_message(chat_id=chat_id, text="Error: A refresh token was not provided. Please try connecting again."))
             return "Error: A refresh token was not provided. Please re-authorize and ensure you are granting 'offline' access.", 400
 
         db.users.update_one(
@@ -93,13 +84,13 @@ def auth_google_callback():
             upsert=True
         )
         
-        bot.send_message(chat_id=chat_id, text="Success! Your Google Tasks account is connected. You will now receive reminders.")
+        asyncio.run(bot.send_message(chat_id=chat_id, text="Success! Your Google Tasks account is connected. You will now receive reminders."))
         return "Authentication successful! You can close this window."
     
     except Exception as e:
         print(f"Error in OAuth callback for {chat_id}: {e}")
         if 'chat_id' in locals():
-             bot.send_message(chat_id=chat_id, text=f"Error saving your credentials: {e}")
+             asyncio.run(bot.send_message(chat_id=chat_id, text=f"Error saving your credentials: {e}"))
         return "An error occurred. Please try again.", 500
 
 @app.route('/run_tasks')
@@ -110,7 +101,7 @@ def run_tasks():
     if not CRON_SECRET or secret != CRON_SECRET:
         print("Unauthorized attempt to run tasks.")
         return "Unauthorized", 401
-
+    
     print("Running scheduled tasks...")
     try:
         check_timed_tasks()

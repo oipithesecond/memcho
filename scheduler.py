@@ -1,8 +1,8 @@
 import sys
 import datetime
+import asyncio
 from googleapiclient.discovery import build
 from shared import db, bot, get_credentials_for_user
-#scheduler
 
 def check_timed_tasks():
     if not db or not bot:
@@ -40,10 +40,10 @@ def check_timed_tasks():
                     task_id = task['id']
                     if task_id not in sent_task_ids:
                         print(f"Sending timed reminder for task '{task['title']}' to user {chat_id}")
-                        bot.send_message(
+                        asyncio.run(bot.send_message(
                             chat_id=chat_id,
                             text=f"Reminder: Your task '{task['title']}' is due soon!"
-                        )
+                        ))
                         db.users.update_one(
                             {'chat_id': chat_id},
                             {'$push': {'sent_task_ids': task_id}}
@@ -58,10 +58,6 @@ def check_timed_tasks():
         print(f"Error fetching users from MongoDB: {e}")
 
 def check_daily_tasks():
-    """
-    Cron Job 2: Checks for date-only tasks due tomorrow.
-    Run this once per day (e.g., at 7:30 UTC: 30 7 * * *).
-    """
     if not db or not bot:
         print("Database or Bot not initialized. Exiting daily task check.")
         return
@@ -97,10 +93,10 @@ def check_daily_tasks():
                         task_id = task['id']
                         if task_id not in sent_task_ids:
                             print(f"Sending daily reminder for task '{task['title']}' to user {chat_id}")
-                            bot.send_message(
+                            asyncio.run(bot.send_message(
                                 chat_id=chat_id,
                                 text=f"Daily Reminder: Your task '{task['title']}' is due tomorrow."
-                            )
+                            ))
                             db.users.update_one(
                                 {'chat_id': chat_id},
                                 {'$push': {'sent_task_ids': task_id}}
