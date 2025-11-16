@@ -1,15 +1,23 @@
+import os
+import datetime
 from flask import request, redirect, session, url_for
 import telegram
-import os
+
 from shared import app, bot, db, get_google_flow
-# web server
+
+from scheduler import check_timed_tasks, check_daily_tasks
 
 @app.route('/')
 def index():
+    """A simple route to confirm the web service is running."""
     return "Bot server is running."
 
 @app.route('/telegram/webhook', methods=['POST'])
 def telegram_webhook():
+    """
+    This is the main webhook endpoint for Telegram.
+    Telegram sends all user messages (Updates) here.
+    """
     if not bot:
         return "Bot not configured", 500
 
@@ -34,10 +42,9 @@ def telegram_webhook():
         
         flow = get_google_flow()
         authorization_url, state = flow.authorization_url(
-            access_type='offline',  
-            prompt='consent'       
+            access_type='offline',
+            prompt='consent'
         )
-
         session['state'] = state
         
         bot.send_message(
@@ -81,7 +88,7 @@ def auth_google_callback():
                 'google_refresh_token': refresh_token
             },
              '$setOnInsert': {
-                'sent_task_ids': [] 
+                'sent_task_ids': []
              }},
             upsert=True
         )
@@ -94,6 +101,31 @@ def auth_google_callback():
         if 'chat_id' in locals():
              bot.send_message(chat_id=chat_id, text=f"Error saving your credentials: {e}")
         return "An error occurred. Please try again.", 500
+
+@app.route('/run_tasks')
+def run_tasks():
+    secret = request.args.get('secret')
+    CRON_SECRET = os.environ.get("CRON_SECRET")
+    
+    if not CRON_SECRET or secret != CRON_SECRET:
+        print("Unauthorized attempt to run tasks.")
+        return "Unauthorized", 401
+
+    print("Running scheduled tasks...")
+    try:
+        check_timed_tasks()
+    except Exception as e:
+        print(f"Error during check_timed_tasks: {e}")
+        
+    now_utc = datetime.datetime.utcnow()
+    if now_utc.hour == 7 and 30 <= now_utc.minute < 45:
+        print("Running daily tasks...")
+        try:
+            check_daily_tasks()
+        except Exception as e:
+            print(f"Error during check_daily_tasks: {e}")
+            
+    return "Tasks executed", 200
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8080))

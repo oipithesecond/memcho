@@ -2,13 +2,9 @@ import sys
 import datetime
 from googleapiclient.discovery import build
 from shared import db, bot, get_credentials_for_user
-#cron job
+#scheduler
 
 def check_timed_tasks():
-    """
-    Cron Job 1: Checks for tasks due in the next 15 minutes.
-    Run this every 15 minutes (*/15 * * * *).
-    """
     if not db or not bot:
         print("Database or Bot not initialized. Exiting timed task check.")
         return
@@ -115,16 +111,3 @@ def check_daily_tasks():
 
     except Exception as e:
         print(f"Error fetching users from MongoDB: {e}")
-
-if __name__ == "__main__":
-    
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-        if command == 'check_timed_tasks':
-            check_timed_tasks()
-        elif command == 'check_daily_tasks':
-            check_daily_tasks()
-        else:
-            print(f"Unknown command: {command}")
-    else:
-        print("Usage: python3 scheduler.py [check_timed_tasks | check_daily_tasks]")
