@@ -5,4 +5,3 @@ YOUR_GOOGLE_CLIENT_SECRET.json
 client_secret.json
 venv/
 .venv/
-requirements.txt

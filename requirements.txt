@@ -1,0 +1,8 @@
+Flask
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
+python-telegram-bot
+pymongo
+gunicorn
+python-dotenv
