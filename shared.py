@@ -24,6 +24,11 @@ if not app.secret_key:
     print("Warning: FLASK_SECRET_KEY is not set. Using a weak default.")
     app.secret_key = "YOUR_FALLBACK_SECRET_KEY_12345"
 
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SAMESITE='None',
+)
+
 #Google OAuth
 SCOPES = ['https://www.googleapis.com/auth/tasks.readonly']
 RENDER_URL = os.environ.get("RENDER_EXTERNAL_URL")
