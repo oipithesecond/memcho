@@ -20,7 +20,6 @@ def telegram_webhook():
     
     if update.message and update.message.text == '/start':
         chat_id = update.message.chat.id
-        session['chat_id'] = chat_id
         
         keyboard = [[telegram.InlineKeyboardButton("Connect Google Tasks", callback_data='connect')]]
         reply_markup = telegram.InlineKeyboardMarkup(keyboard)
@@ -33,14 +32,14 @@ def telegram_webhook():
         
     elif update.callback_query and update.callback_query.data == 'connect':
         chat_id = update.callback_query.message.chat.id
-        session['chat_id'] = chat_id 
         
         flow = get_google_flow()
-        authorization_url, state = flow.authorization_url(
+        
+        authorization_url, _ = flow.authorization_url(
             access_type='offline',
-            prompt='consent'
+            prompt='consent',
+            state=str(chat_id) 
         )
-        session['state'] = state
         
         asyncio.run(bot.send_message(
             chat_id=chat_id, 
@@ -52,11 +51,15 @@ def telegram_webhook():
 
 @app.route('/auth/google/callback')
 def auth_google_callback():
-    state = session.get('state')
-    chat_id = session.get('chat_id')
+    state_from_google = request.args.get('state')
     
-    if not state or not chat_id:
-        return "Error: Session expired or invalid. Please try connecting again from Telegram.", 400
+    if not state_from_google:
+        return "Error: No state returned from Google. Please try connecting again from Telegram.", 400
+        
+    try:
+        chat_id = int(state_from_google)
+    except ValueError:
+        return "Error: Invalid state returned from Google. Please try connecting again from Telegram.", 400
     
     if not db:
         return "Error: Database not connected.", 500
