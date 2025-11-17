@@ -6,3 +6,4 @@ python-telegram-bot
 pymongo
 gunicorn
 python-dotenv
+nest-asyncio
