@@ -13,7 +13,7 @@ def index():
 
 @app.route('/telegram/webhook', methods=['POST'])
 def telegram_webhook():
-    if not bot:
+    if bot is None:
         return "Bot not configured", 500
 
     update = telegram.Update.de_json(request.get_json(force=True), bot)
@@ -38,7 +38,7 @@ def telegram_webhook():
         authorization_url, _ = flow.authorization_url(
             access_type='offline',
             prompt='consent',
-            state=str(chat_id) 
+            state=str(chat_id)
         )
         
         asyncio.run(bot.send_message(
@@ -61,7 +61,7 @@ def auth_google_callback():
     except ValueError:
         return "Error: Invalid state returned from Google. Please try connecting again from Telegram.", 400
     
-    if not db:
+    if db is None:
         return "Error: Database not connected.", 500
 
     try:

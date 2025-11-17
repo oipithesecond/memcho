@@ -5,7 +5,7 @@ from googleapiclient.discovery import build
 from shared import db, bot, get_credentials_for_user
 
 def check_timed_tasks():
-    if not db or not bot:
+    if db is None or bot is None:
         print("Database or Bot not initialized. Exiting timed task check.")
         return
 
@@ -58,12 +58,12 @@ def check_timed_tasks():
         print(f"Error fetching users from MongoDB: {e}")
 
 def check_daily_tasks():
-    if not db or not bot:
+    if db is None or bot is None:
         print("Database or Bot not initialized. Exiting daily task check.")
         return
 
     print(f"Running check_daily_tasks at {datetime.datetime.utcnow()} UTC")
-    tomorrow = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    tomorrow = (datetime.datetime.utcnow() + datetime.timedelta(days=1)).strftime('%Y-%m-d')
     
     try:
         users_cursor = db.users.find()
