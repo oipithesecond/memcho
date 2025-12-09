@@ -25,6 +25,7 @@ app.post('/api/telegram', (req, res) => {
     const { body } = req;
     bot.processUpdate(body);
     res.sendStatus(200);
+    console.log("Telegram update received:", req.body);
   });
 
 // tele commands
