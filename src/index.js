@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 //routes
 app.get('/api/cron/tick', cronController.runTaskChecks);
-app.get('/auth/callback', authController.handleAuthCallback);
+app.get('/auth/google/callback', authController.handleAuthCallback);
 
 app.post('/api/telegram', (req, res) => {
     const { body } = req;
