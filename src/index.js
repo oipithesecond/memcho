@@ -8,6 +8,7 @@ const cronController = require('./controllers/cronController');
 
 dotenv.config();
 const app = express();
+app.use(express.json());
 const PORT = process.env.PORT || 3000;
 
 // db connection
@@ -19,6 +20,12 @@ mongoose.connect(process.env.MONGO_URI)
 //routes
 app.get('/api/cron/tick', cronController.runTaskChecks);
 app.get('/auth/callback', authController.handleAuthCallback);
+
+app.post('/api/telegram', (req, res) => {
+    const { body } = req;
+    bot.processUpdate(body);
+    res.sendStatus(200);
+  });
 
 // tele commands
 bot.onText(/\/start/, (msg) => {

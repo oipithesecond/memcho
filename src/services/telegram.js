@@ -3,7 +3,19 @@ const GeoTz = require('geo-tz');
 const User = require('../models/User');
 require('dotenv').config();
 
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+const token = process.env.TELEGRAM_BOT_TOKEN;
+let bot;
+
+if (process.env.NODE_ENV === 'production') {
+    //prod(webhooks)
+    bot = new TelegramBot(token);
+    bot.setWebHook(process.env.APP_URL + '/api/telegram');
+    console.log("Bot running in PRODUCTION mode (Webhooks)");
+  } else {
+    //local(polling)
+    bot = new TelegramBot(token, { polling: true });
+    console.log("Bot running in DEVELOPMENT mode (Polling)");
+  }
 
 const sendMessage = async (chatId, text) => {
   try {
